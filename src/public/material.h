@@ -107,6 +107,10 @@ struct MaterialBlendState_t
 
 		this->renderTargetWriteMask = renderTargetWriteMask & 0xF;
 	}
+	void operator=(uint32_t rhs)
+	{
+		memcpy(this, &rhs, sizeof(uint32_t));
+	}
 };
 
 // aligned to 16 bytes so it can be loaded as 3 m128i structs in engine
