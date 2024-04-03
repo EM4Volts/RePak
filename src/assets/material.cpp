@@ -50,7 +50,7 @@ void MaterialAsset_t::FromJSON(rapidjson::Value& mapEntry)
     // default type on v15 assets is "sknp"
     std::string defaultMaterialType = this->assetVersion <= 12 ? "skn" : "sknp";
     this->materialTypeStr = JSON_GET_STR(mapEntry, "type", defaultMaterialType);
-    
+
     this->materialType = Material_ShaderTypeFromString(this->materialTypeStr);
 
     // material max dimensions
@@ -144,7 +144,7 @@ void MaterialAsset_t::FromJSON(rapidjson::Value& mapEntry)
     // get referenced colpass material if exists
     if (JSON_IS_STR(mapEntry, "colpass"))
     {
-        std::string colpassPath = "material/" + mapEntry["colpass"].GetStdString()+ "_" + this->materialTypeStr + ".rpak"; // auto add type? remove if disagree. materials never have their types in names so I don't think this should be expected?
+        std::string colpassPath = "material/" + mapEntry["colpass"].GetStdString() + "_" + this->materialTypeStr + ".rpak"; // auto add type? remove if disagree. materials never have their types in names so I don't think this should be expected?
         this->colpassMaterial = RTech::StringToGuid(colpassPath.c_str());
     }
 
@@ -377,7 +377,7 @@ void Assets::AddMaterialAsset_v12(CPakFile* pak, std::vector<PakAsset_t>* assetE
     // used only for string to guid
     std::string fullAssetPath = "material/" + sAssetPath + "_" + matlAsset->materialTypeStr + ".rpak"; // Make full rpak asset path.
     matlAsset->guid = RTech::StringToGuid(fullAssetPath.c_str()); // Convert full rpak asset path to guid and set it in the material header.
-    
+
     // !!!R2 SPECIFIC!!!
     {
         CPakDataChunk nameChunk = pak->CreateDataChunk(sAssetPath.size() + 1, SF_DEV | SF_CPU, 1);
@@ -417,6 +417,24 @@ void Assets::AddMaterialAsset_v12(CPakFile* pak, std::vector<PakAsset_t>* assetE
             dxState.blendStates[2] = MaterialBlendState_t(true, D3D11_BLEND_ONE, D3D11_BLEND_INV_SRC_ALPHA, D3D11_BLEND_OP_ADD, D3D11_BLEND_ONE, D3D11_BLEND_ZERO, D3D11_BLEND_OP_ADD, 0xF);
             dxState.blendStates[3] = MaterialBlendState_t(true, D3D11_BLEND_ONE, D3D11_BLEND_INV_SRC_ALPHA, D3D11_BLEND_OP_ADD, D3D11_BLEND_INV_DEST_ALPHA, D3D11_BLEND_ONE, D3D11_BLEND_OP_ADD, 0x0);
         }
+    }
+
+
+    for (int i = 0; i < 2; ++i)
+    {
+        MaterialDXState_t& dxState = matlAsset->dxStates[i];
+
+        if (JSON_IS_UINT(mapEntry, "blendState0"))
+            dxState.blendStates[0] = mapEntry["blendState0"].GetUint();
+
+        if (JSON_IS_UINT(mapEntry, "blendState1"))
+            dxState.blendStates[1] = mapEntry["blendState1"].GetUint();
+
+        if (JSON_IS_UINT(mapEntry, "blendState2"))
+            dxState.blendStates[2] = mapEntry["blendState2"].GetUint();
+
+        if (JSON_IS_UINT(mapEntry, "blendState3"))
+            dxState.blendStates[3] = mapEntry["blendState3"].GetUint();
     }
 
     if (JSON_IS_STR(mapEntry, "preset"))
@@ -507,9 +525,9 @@ void Assets::AddMaterialAsset_v12(CPakFile* pak, std::vector<PakAsset_t>* assetE
 
     // ===============================
     // fill out the rest of the header
-    
+
     size_t currentDataBufOffset = 0;
-    
+
     matlAsset->textureHandles = dataChunk.GetPointer(currentDataBufOffset);
     pak->AddPointer(hdrChunk.GetPointer(offsetof(MaterialAssetHeader_v12_t, textureHandles)));
     currentDataBufOffset += textureRefSize;
@@ -585,7 +603,7 @@ void Assets::AddMaterialAsset_v12(CPakFile* pak, std::vector<PakAsset_t>* assetE
 
     /* SETUP DX SHADER BUF */
     GenericShaderBuffer genericShaderBuf{};
-    
+
     Material_SetupDXBufferFromJson(&genericShaderBuf, mapEntry);
 
     MaterialShaderBufferV12 shaderBuf = genericShaderBuf.GenericV12();
